@@ -93,7 +93,7 @@ document.body.addEventListener('keyup', e => {
 
 document.body.addEventListener('mousemove', (e: MouseEvent) => {
   mousePos = new Point(e.offsetX, e.offsetY);
-  line.setEnd(new Vector(mousePos.x * 2, mousePos.y * 2));
+  line.setEnd(new Vector(mousePos.x, mousePos.y));
 });
 
 function distanceFromCircle(p: Point, circle: Circle): number {
@@ -157,7 +157,7 @@ function getCircleDist(p: Point): number {
     CheckAndMove(new Vector(characterSpeed, 0));
   }
   line.setStart(character.pos.clone());
-  line.setEnd(new Vector(mousePos.x * 2, mousePos.y * 2));
+  line.setEnd(new Vector(mousePos.x, mousePos.y));
 
   arcs.empty();
   let point = character.pos.clone();
