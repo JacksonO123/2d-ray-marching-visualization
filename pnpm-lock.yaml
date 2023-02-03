@@ -1,11 +1,11 @@
 lockfileVersion: 5.4
 
 specifiers:
-  simulationjs: ^2.4.7
+  simulationjs: ^2.5.4
   vite: ^4.1.1
 
 dependencies:
-  simulationjs: 2.4.7
+  simulationjs: 2.5.4
   vite: 4.1.1
 
 packages:
@@ -303,8 +303,8 @@ packages:
       fsevents: 2.3.2
     dev: false
 
-  /simulationjs/2.4.7:
-    resolution: {integrity: sha512-WBhTowdQxeW4swxL/8rf5OOvhCEnbeULIXkqQ7iIfKbnvhWkCZugaQgjs0hewCMpgTrv5gaCYYCzyi/+T7chUQ==}
+  /simulationjs/2.5.4:
+    resolution: {integrity: sha512-v/GdiBRCkBo+L/MkBeivXRz41VIEhotZD1Rz4yJlDDClqFZP4lUrL4TWKJyPkq61II1lnIuYveT1hCMacDjz/Q==}
     dev: false
 
   /source-map-js/1.0.2:

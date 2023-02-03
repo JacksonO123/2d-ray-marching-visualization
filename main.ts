@@ -91,9 +91,9 @@ document.body.addEventListener('keyup', e => {
   if (f) f();
 });
 
-document.body.addEventListener('mousemove', (e: MouseEvent) => {
+canvas.on('mousemove', (e: MouseEvent) => {
   mousePos = new Point(e.offsetX, e.offsetY);
-  line.setEnd(new Vector(mousePos.x, mousePos.y));
+  line.setEnd(new Vector(mousePos.x * canvas.ratio, mousePos.y * canvas.ratio));
 });
 
 function distanceFromCircle(p: Point, circle: Circle): number {
@@ -143,6 +143,13 @@ function getCircleDist(p: Point): number {
   return dist;
 }
 
+function pointIsOut(p: Point): boolean {
+  if (p.x < 0 || p.y < 0 || p.x > canvas.width || p.y > canvas.height) {
+    return true;
+  }
+  return false;
+}
+
 (function gameLoop() {
   if (wDown) {
     CheckAndMove(new Vector(0, -characterSpeed));
@@ -157,7 +164,7 @@ function getCircleDist(p: Point): number {
     CheckAndMove(new Vector(characterSpeed, 0));
   }
   line.setStart(character.pos.clone());
-  line.setEnd(new Vector(mousePos.x, mousePos.y));
+  line.setEnd(new Vector(mousePos.x * 2, mousePos.y * 2));
 
   arcs.empty();
   let point = character.pos.clone();
@@ -172,8 +179,9 @@ function getCircleDist(p: Point): number {
   }
   const arc = new Arc(point.clone(), dist, 0, 360, 4, new Color(150, 150, 150));
   arcs.add(arc);
-  const steps = 16;
-  for (let i = 0; i < steps; i++) {
+  const maxSteps = 40;
+  let count = 0;
+  while (!pointIsOut(point) && count < maxSteps) {
     point.appendX(Math.cos(rotation) * dist);
     point.appendY(-Math.sin(rotation) * dist);
     dist = getCircleDist(point);
@@ -187,6 +195,7 @@ function getCircleDist(p: Point): number {
       new Color(150, 150, 150)
     );
     arcs.add(arc);
+    count++;
   }
 
   requestAnimationFrame(gameLoop);
