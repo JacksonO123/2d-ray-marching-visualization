@@ -172,11 +172,12 @@ function getCircleDist(p: Point): number {
   }
   const arc = new Arc(point.clone(), dist, 0, 360, 4, new Color(150, 150, 150));
   arcs.add(arc);
-  const steps = 10;
+  const steps = 16;
   for (let i = 0; i < steps; i++) {
     point.appendX(Math.cos(rotation) * dist);
     point.appendY(-Math.sin(rotation) * dist);
     dist = getCircleDist(point);
+    if (dist > 1000) break;
     const arc = new Arc(
       point.clone(),
       Math.max(dist, 1),
