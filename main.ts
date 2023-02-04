@@ -43,18 +43,6 @@ const line = new Line(
 );
 canvas.add(line);
 
-// const animationTime = 5;
-// (function moveLoop() {
-//   const newCircles = generateCircles(numCircles);
-//   for (let i = 0; i < numCircles; i++) {
-//     circles.scene[i].moveTo(newCircles[i].pos, animationTime);
-//     (circles.scene[i] as Circle).setRadius(newCircles[i].radius, animationTime);
-//   }
-//   setTimeout(() => {
-//     moveLoop();
-//   }, 1000 * animationTime);
-// })();
-
 function setCharacterPosition() {
   character.moveTo(
     new Point(random(canvas.canvas.width), random(canvas.canvas.height))
@@ -81,12 +69,12 @@ const keyupEvents = {
   d: () => (dDown = false),
 };
 
-document.body.addEventListener('keydown', e => {
+document.body.addEventListener('keydown', (e) => {
   const f = keydownEvents[e.key];
   if (f) f();
 });
 
-document.body.addEventListener('keyup', e => {
+document.body.addEventListener('keyup', (e) => {
   const f = keyupEvents[e.key];
   if (f) f();
 });
@@ -164,7 +152,7 @@ function pointIsOut(p: Point): boolean {
     CheckAndMove(new Vector(characterSpeed, 0));
   }
   line.setStart(character.pos.clone());
-  line.setEnd(new Vector(mousePos.x * 2, mousePos.y * 2));
+  line.setEnd(new Vector(mousePos.x * canvas.ratio, mousePos.y * canvas.ratio));
 
   arcs.empty();
   let point = character.pos.clone();
@@ -185,7 +173,6 @@ function pointIsOut(p: Point): boolean {
     point.appendX(Math.cos(rotation) * dist);
     point.appendY(-Math.sin(rotation) * dist);
     dist = getCircleDist(point);
-    if (dist > 1000) break;
     const arc = new Arc(
       point.clone(),
       Math.max(dist, 1),
@@ -231,9 +218,6 @@ function generateCircles(num: number): Circle[] {
   return res;
 }
 
-function random(range: number, offset?: number): number {
-  return (
-    Math.floor(Math.random() * (range - (offset ? offset : 0))) +
-    (offset ? offset : 0)
-  );
+function random(max: number, min?: number): number {
+  return Math.floor(Math.random() * (max - (min ? min : 0))) + (min ? min : 0);
 }
