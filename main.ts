@@ -126,7 +126,7 @@ function CheckAndMove(v: Vector) {
       movementVec.x + fromCircleVec.x,
       movementVec.y + fromCircleVec.y
     );
-    character.move(toMove);
+    character.move(toMove.multiply(2));
   }
 }
 
@@ -177,11 +177,18 @@ function pointIsOut(p: Point): boolean {
     rotation *= -1;
     rotation = Math.PI * 2 - rotation;
   }
-  const arc = new Arc(point.clone(), dist, 0, 360, 4, new Color(150, 150, 150));
+  const arc = new Arc(
+    point.clone(),
+    Math.max(dist, 1),
+    0,
+    360,
+    4,
+    new Color(150, 150, 150)
+  );
   arcs.add(arc);
   const maxSteps = 40;
   let count = 0;
-  while (!pointIsOut(point) && count < maxSteps) {
+  while (!pointIsOut(point) && dist > 1) {
     point.appendX(Math.cos(rotation) * dist);
     point.appendY(-Math.sin(rotation) * dist);
     dist = getCircleDist(point);
