@@ -91,7 +91,12 @@ document.body.addEventListener('keyup', e => {
 
 canvas.on('mousemove', (e: MouseEvent) => {
   mousePos = new Point(e.offsetX, e.offsetY);
-  line.setEnd(new Vector(mousePos.x * canvas.ratio, mousePos.y * canvas.ratio));
+  line.setEnd(
+    new Vector(
+      mousePos.x * window.devicePixelRatio,
+      mousePos.y * window.devicePixelRatio
+    )
+  );
 });
 
 function distanceFromCircle(p: Point, circle: Circle): number {
@@ -162,7 +167,12 @@ function pointIsOut(p: Point): boolean {
     CheckAndMove(new Vector(characterSpeed, 0));
   }
   line.setStart(character.pos.clone());
-  line.setEnd(new Vector(mousePos.x * 2, mousePos.y * 2));
+  line.setEnd(
+    new Vector(
+      mousePos.x * window.devicePixelRatio,
+      mousePos.y * window.devicePixelRatio
+    )
+  );
 
   arcs.empty();
   let point = character.pos.clone();
