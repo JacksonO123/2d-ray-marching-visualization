@@ -44,9 +44,7 @@ const line = new Line(
 canvas.add(line);
 
 function setCharacterPosition() {
-  character.moveTo(
-    new Point(random(canvas.canvas.width), random(canvas.canvas.height))
-  );
+  character.moveTo(new Point(random(canvas.width), random(canvas.height)));
 }
 
 let wDown = false;
@@ -69,12 +67,12 @@ const keyupEvents = {
   d: () => (dDown = false),
 };
 
-document.body.addEventListener('keydown', (e) => {
+document.body.addEventListener('keydown', e => {
   const f = keydownEvents[e.key];
   if (f) f();
 });
 
-document.body.addEventListener('keyup', (e) => {
+document.body.addEventListener('keyup', e => {
   const f = keyupEvents[e.key];
   if (f) f();
 });
@@ -215,7 +213,7 @@ function generateCircles(num: number): Circle[] {
     let c: Circle;
     do {
       c = new Circle(
-        new Point(random(canvas.canvas.width), random(canvas.canvas.height)),
+        new Point(random(canvas.width), random(canvas.height)),
         random(maxCircleSize, minCircleSize),
         new Color(random(255), random(255), random(255))
       );
