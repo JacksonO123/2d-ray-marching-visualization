@@ -10,17 +10,26 @@ import {
   compare,
   Arc,
   Line,
+  Square,
 } from 'simulationjs';
 
 const canvas = new Simulation('canvas');
 canvas.fitElement();
 
-const circles = new SceneCollection('circles');
-canvas.add(circles);
+const circlesCol = new SceneCollection('circles');
+canvas.add(circlesCol);
 
-const numCircles = 24;
-const c = generateCircles(numCircles);
-circles.scene = c as SimulationElement[];
+let hasSquares = true;
+
+const numObjects = 24;
+const circles = generateCircles(Math.floor(numObjects / 2));
+const squares = hasSquares ? generateSquares(Math.floor(numObjects / 2)) : [];
+circlesCol.scene = [
+  ...(circles as SimulationElement[]),
+  ...(squares as SimulationElement[]),
+];
+
+squares[0].fill(new Color(255, 0, 0));
 
 const character = new Circle(new Point(0, 0), 12, new Color(0, 0, 0));
 
@@ -29,7 +38,7 @@ canvas.add(arcs);
 
 do {
   setCharacterPosition();
-} while (checkCirclesCollide(circles.scene as Circle[], character));
+} while (checkCirclesCollide(circlesCol.scene as Circle[], character));
 canvas.add(character);
 const characterSpeed = 4;
 
@@ -42,18 +51,6 @@ const line = new Line(
   2
 );
 canvas.add(line);
-
-// const animationTime = 5;
-// (function moveLoop() {
-//   const newCircles = generateCircles(numCircles);
-//   for (let i = 0; i < numCircles; i++) {
-//     circles.scene[i].moveTo(newCircles[i].pos, animationTime);
-//     (circles.scene[i] as Circle).setRadius(newCircles[i].radius, animationTime);
-//   }
-//   setTimeout(() => {
-//     moveLoop();
-//   }, 1000 * animationTime);
-// })();
 
 function setCharacterPosition() {
   character.moveTo(new Point(random(canvas.width), random(canvas.height)));
@@ -90,13 +87,8 @@ document.body.addEventListener('keyup', e => {
 });
 
 canvas.on('mousemove', (e: MouseEvent) => {
-  mousePos = new Point(e.offsetX, e.offsetY);
-  line.setEnd(
-    new Vector(
-      mousePos.x * window.devicePixelRatio,
-      mousePos.y * window.devicePixelRatio
-    )
-  );
+  mousePos = new Point(e.offsetX * canvas.ratio, e.offsetY * canvas.ratio);
+  line.setEnd(new Vector(mousePos.x, mousePos.y));
 });
 
 function distanceFromCircle(p: Point, circle: Circle): number {
@@ -105,13 +97,13 @@ function distanceFromCircle(p: Point, circle: Circle): number {
 
 function CheckAndMove(v: Vector) {
   let collidingWith: Circle | null = null;
-  for (let i = 0; i < circles.scene.length; i++) {
+  for (let i = 0; i < circlesCol.scene.length; i++) {
     if (
-      distance(character.pos.clone().add(v), circles.scene[i].pos) -
+      distance(character.pos.clone().add(v), circlesCol.scene[i].pos) -
         character.radius <
-      (circles.scene[i] as Circle).radius
+      (circlesCol.scene[i] as Circle).radius
     ) {
-      collidingWith = (circles.scene[i] as Circle).clone();
+      collidingWith = (circlesCol.scene[i] as Circle).clone();
       break;
     }
   }
@@ -133,24 +125,33 @@ function CheckAndMove(v: Vector) {
   }
 }
 
-function getCircleDist(p: Point): number {
+function pointIsOut(p: Point): boolean {
+  if (p.x < 0 || p.y < 0 || p.x > canvas.width || p.y > canvas.height) {
+    return true;
+  }
+  return false;
+}
+
+function getMinDist(p: Point, h = false) {
   let dist = 0;
-  for (let i = 0; i < circles.scene.length; i++) {
-    const d = distanceFromCircle(p, circles.scene[i] as Circle);
-    if (i == 0) {
+  for (let i = 0; i < circles.length; i++) {
+    const d = distanceFromCircle(p, circles[i]);
+    if (i === 0) {
+      dist = d;
+    } else if (d < dist) {
+      dist = d;
+    }
+  }
+
+  for (let i = 0; i < squares.length; i++) {
+    const d = distance(p, rectPoint(p, squares[i], h));
+    if (i === 0 && dist === 0) {
       dist = d;
     } else if (d < dist) {
       dist = d;
     }
   }
   return dist;
-}
-
-function pointIsOut(p: Point): boolean {
-  if (p.x < 0 || p.y < 0 || p.x > canvas.width || p.y > canvas.height) {
-    return true;
-  }
-  return false;
 }
 
 (function gameLoop() {
@@ -167,16 +168,11 @@ function pointIsOut(p: Point): boolean {
     CheckAndMove(new Vector(characterSpeed, 0));
   }
   line.setStart(character.pos.clone());
-  line.setEnd(
-    new Vector(
-      mousePos.x * window.devicePixelRatio,
-      mousePos.y * window.devicePixelRatio
-    )
-  );
+  line.setEnd(new Vector(mousePos.x, mousePos.y));
 
   arcs.empty();
   let point = character.pos.clone();
-  let dist = getCircleDist(point);
+  let dist = getMinDist(point, true);
   let rotation = -Math.atan2(
     line.end.y - line.start.y,
     line.end.x - line.start.x
@@ -197,7 +193,7 @@ function pointIsOut(p: Point): boolean {
   while (!pointIsOut(point) && dist > 1) {
     point.appendX(Math.cos(rotation) * dist);
     point.appendY(-Math.sin(rotation) * dist);
-    dist = getCircleDist(point);
+    dist = getMinDist(point);
     if (dist > 1000) break;
     const arc = new Arc(
       point.clone(),
@@ -223,6 +219,36 @@ function checkCirclesCollide(circles: Circle[], circle: Circle): boolean {
     }
   }
   return false;
+}
+
+function rectPoint(p: Point, b: Square, h = false) {
+  const vec = p.clone().sub(new Vector(b.pos.x, b.pos.y));
+
+  vec.setY(Math.min(b.height / 2, vec.y));
+  vec.setX(Math.min(b.width / 2, vec.x));
+
+  vec.setY(Math.max(-b.height / 2, vec.y));
+  vec.setX(Math.max(-b.width / 2, vec.x));
+
+  vec.appendX(b.pos.x);
+  vec.appendY(b.pos.y);
+  return vec;
+}
+
+function generateSquares(num: number): Square[] {
+  let res: Square[] = [];
+  const minSize = 36;
+  const maxSize = 180;
+  for (let i = 0; i < num; i++) {
+    let s = new Square(
+      new Point(random(canvas.width), random(canvas.height)),
+      random(minSize, maxSize),
+      random(minSize, maxSize),
+      new Color(random(255), random(255), random(255))
+    );
+    res.push(s);
+  }
+  return res;
 }
 
 function generateCircles(num: number): Circle[] {

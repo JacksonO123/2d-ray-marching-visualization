@@ -3,7 +3,7 @@
     "dev": "vite"
   },
   "dependencies": {
-    "simulationjs": "^2.7.3",
+    "simulationjs": "^2.7.5",
     "vite": "^4.1.1"
   }
 }
