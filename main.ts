@@ -22,7 +22,7 @@ canvas.add(objects);
 
 let hasSquares = true;
 
-const numObjects = 60;
+const numObjects = 20;
 const circles = generateCircles(Math.floor(numObjects / 2));
 const squares = hasSquares ? generateSquares(Math.floor(numObjects / 2)) : [];
 objects.scene = [
