@@ -11,25 +11,24 @@ import {
   Arc,
   Line,
   Square,
+  pythag,
 } from 'simulationjs';
 
 const canvas = new Simulation('canvas');
 canvas.fitElement();
 
-const circlesCol = new SceneCollection('circles');
-canvas.add(circlesCol);
+const objects = new SceneCollection('circles');
+canvas.add(objects);
 
 let hasSquares = true;
 
 const numObjects = 24;
 const circles = generateCircles(Math.floor(numObjects / 2));
 const squares = hasSquares ? generateSquares(Math.floor(numObjects / 2)) : [];
-circlesCol.scene = [
+objects.scene = [
   ...(circles as SimulationElement[]),
   ...(squares as SimulationElement[]),
 ];
-
-squares[0].fill(new Color(255, 0, 0));
 
 const character = new Circle(new Point(0, 0), 12, new Color(0, 0, 0));
 
@@ -38,7 +37,7 @@ canvas.add(arcs);
 
 do {
   setCharacterPosition();
-} while (checkCirclesCollide(circlesCol.scene as Circle[], character));
+} while (checkCollidesObject(circles, squares, character));
 canvas.add(character);
 const characterSpeed = 4;
 
@@ -96,30 +95,42 @@ function distanceFromCircle(p: Point, circle: Circle): number {
 }
 
 function CheckAndMove(v: Vector) {
-  let collidingWith: Circle | null = null;
-  for (let i = 0; i < circlesCol.scene.length; i++) {
+  let fromColPointVec: Point | null = null;
+  for (let i = 0; i < circles.length; i++) {
     if (
-      distance(character.pos.clone().add(v), circlesCol.scene[i].pos) -
+      distance(character.pos.clone().add(v), circles[i].pos) -
         character.radius <
-      (circlesCol.scene[i] as Circle).radius
+      circles[i].radius
     ) {
-      collidingWith = (circlesCol.scene[i] as Circle).clone();
+      fromColPointVec = new Vector(
+        character.pos.x - circles[i].pos.x,
+        character.pos.y - circles[i].pos.y
+      )
+        .normalize()
+        .multiply(characterSpeed);
       break;
     }
   }
-  if (!collidingWith) {
+  if (!fromColPointVec) {
+    for (let i = 0; i < squares.length; i++) {
+      const colPoint = rectPoint(character.pos, squares[i]);
+      if (distance(character.pos, colPoint) <= character.radius) {
+        fromColPointVec = new Vector(
+          character.pos.x - colPoint.x,
+          character.pos.y - colPoint.y
+        )
+          .normalize()
+          .multiply(characterSpeed);
+      }
+    }
+  }
+  if (!fromColPointVec) {
     character.move(v);
   } else {
     const movementVec = v.clone();
-    const fromCircleVec = new Vector(
-      character.pos.x - collidingWith.pos.x,
-      character.pos.y - collidingWith.pos.y
-    )
-      .normalize()
-      .multiply(characterSpeed);
     const toMove = new Vector(
-      movementVec.x + fromCircleVec.x,
-      movementVec.y + fromCircleVec.y
+      movementVec.x + fromColPointVec.x,
+      movementVec.y + fromColPointVec.y
     );
     character.move(toMove);
   }
@@ -132,7 +143,7 @@ function pointIsOut(p: Point): boolean {
   return false;
 }
 
-function getMinDist(p: Point, h = false) {
+function getMinDist(p: Point) {
   let dist = 0;
   for (let i = 0; i < circles.length; i++) {
     const d = distanceFromCircle(p, circles[i]);
@@ -144,7 +155,7 @@ function getMinDist(p: Point, h = false) {
   }
 
   for (let i = 0; i < squares.length; i++) {
-    const d = distance(p, rectPoint(p, squares[i], h));
+    const d = distance(p, rectPoint(p, squares[i]));
     if (i === 0 && dist === 0) {
       dist = d;
     } else if (d < dist) {
@@ -172,7 +183,7 @@ function getMinDist(p: Point, h = false) {
 
   arcs.empty();
   let point = character.pos.clone();
-  let dist = getMinDist(point, true);
+  let dist = getMinDist(point);
   let rotation = -Math.atan2(
     line.end.y - line.start.y,
     line.end.x - line.start.x
@@ -209,19 +220,37 @@ function getMinDist(p: Point, h = false) {
   requestAnimationFrame(gameLoop);
 })();
 
-function checkCirclesCollide(circles: Circle[], circle: Circle): boolean {
-  for (let i = 0; i < circles.length; i++) {
-    if (
-      !compare(circles[i], circle) &&
-      distance(circle.pos, circles[i].pos) < circles[i].radius + circle.radius
-    ) {
-      return true;
+function checkCollidesObject(
+  circles: Circle[],
+  squares: Square[],
+  el: SimulationElement
+): boolean {
+  if (el.type === 'circle') {
+    const c = el as Circle;
+    for (let i = 0; i < circles.length; i++) {
+      if (
+        !compare(circles[i], c) &&
+        distance(c.pos, circles[i].pos) < circles[i].radius + c.radius
+      ) {
+        return true;
+      }
+    }
+  } else if (el.type === 'square') {
+    const sq = el as Square;
+    const maxDist = pythag(sq.width / 2, sq.height / 2);
+    for (let i = 0; i < squares.length; i++) {
+      if (
+        !compare(squares[i], el) &&
+        distance(sq.pos, rectPoint(sq.pos, squares[i])) - maxDist < 0
+      ) {
+        return true;
+      }
     }
   }
   return false;
 }
 
-function rectPoint(p: Point, b: Square, h = false) {
+function rectPoint(p: Point, b: Square) {
   const vec = p.clone().sub(new Vector(b.pos.x, b.pos.y));
 
   vec.setY(Math.min(b.height / 2, vec.y));
@@ -240,7 +269,7 @@ function generateSquares(num: number): Square[] {
   const minSize = 36;
   const maxSize = 180;
   for (let i = 0; i < num; i++) {
-    let s = new Square(
+    const s = new Square(
       new Point(random(canvas.width), random(canvas.height)),
       random(minSize, maxSize),
       random(minSize, maxSize),
@@ -256,14 +285,11 @@ function generateCircles(num: number): Circle[] {
   const minCircleSize = 18;
   const maxCircleSize = 90;
   for (let i = 0; i < num; i++) {
-    let c: Circle;
-    do {
-      c = new Circle(
-        new Point(random(canvas.width), random(canvas.height)),
-        random(maxCircleSize, minCircleSize),
-        new Color(random(255), random(255), random(255))
-      );
-    } while (checkCirclesCollide(res, c));
+    let c: Circle = new Circle(
+      new Point(random(canvas.width), random(canvas.height)),
+      random(maxCircleSize, minCircleSize),
+      new Color(random(255), random(255), random(255))
+    );
     res.push(c);
   }
   return res;
