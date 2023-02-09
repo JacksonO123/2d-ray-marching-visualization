@@ -22,7 +22,7 @@ canvas.add(objects);
 
 let hasSquares = true;
 
-const numObjects = 24;
+const numObjects = 60;
 const circles = generateCircles(Math.floor(numObjects / 2));
 const squares = hasSquares ? generateSquares(Math.floor(numObjects / 2)) : [];
 objects.scene = [
@@ -223,28 +223,19 @@ function getMinDist(p: Point) {
 function checkCollidesObject(
   circles: Circle[],
   squares: Square[],
-  el: SimulationElement
+  el: Circle
 ): boolean {
-  if (el.type === 'circle') {
-    const c = el as Circle;
-    for (let i = 0; i < circles.length; i++) {
-      if (
-        !compare(circles[i], c) &&
-        distance(c.pos, circles[i].pos) < circles[i].radius + c.radius
-      ) {
-        return true;
-      }
+  for (let i = 0; i < circles.length; i++) {
+    if (
+      !compare(circles[i], el) &&
+      distance(el.pos, circles[i].pos) < circles[i].radius + el.radius
+    ) {
+      return true;
     }
-  } else if (el.type === 'square') {
-    const sq = el as Square;
-    const maxDist = pythag(sq.width / 2, sq.height / 2);
-    for (let i = 0; i < squares.length; i++) {
-      if (
-        !compare(squares[i], el) &&
-        distance(sq.pos, rectPoint(sq.pos, squares[i])) - maxDist < 0
-      ) {
-        return true;
-      }
+  }
+  for (let i = 0; i < squares.length; i++) {
+    if (distance(el.pos, rectPoint(el.pos, squares[i])) < el.radius) {
+      return true;
     }
   }
   return false;
