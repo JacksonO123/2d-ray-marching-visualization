@@ -11,7 +11,6 @@ import {
   Arc,
   Line,
   Square,
-  pythag,
 } from 'simulationjs';
 
 const canvas = new Simulation('canvas');
